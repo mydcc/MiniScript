@@ -5,41 +5,42 @@ npc_id = "donald_trump"
 cube_id = "trump_cube"
 
 // Origin Coordinates
-base_x = -64
+base_x = -112
 base_y = 0.0
-base_z = -256
+base_z = -334
+
+// 1. Initial Position Reset (Startposition fixieren)
+moveObject npc_id, base_x, base_y, base_z
+moveObject cube_id, base_x, base_y, base_z
+wait 1
 
 // --- Main Execution Loop ---
 while true
-    // Deterministic Randomness for Vector Calculation
-    val_r  = round(rnd * 8) + 2
-    val_r2 = round(rnd * 10)
-    val_rot = rnd * 360
+    // Optimierte Zufallsbewegung: Frei im Raum (nicht nur diagonal)
+    // Radius von +/- 60 Einheiten um die Startposition
+    val_anim = round(rnd * 8) + 2
+    offset_x = (rnd * 120) - 60
+    offset_z = (rnd * 120) - 60
+    val_rot  = rnd * 360
     
-    // Cache offset arithmetic to reduce ALU cycles
-    offset = val_r * val_r2
-    target_x = base_x + offset
-    target_z = base_z + offset
+    target_x = base_x + offset_x
+    target_z = base_z + offset_z
 
-    // Object Synchronization: Move & Rotate
-    // Position updates applied to both primary and secondary descriptors
-    aniObject npc_id, val_r, "oneshot", 1
+    // Synchronisation von NPC und Cube
+    aniObject npc_id, val_anim, "oneshot", 1
     moveObject npc_id, target_x, base_y, target_z
     rotateObject npc_id, 0, val_rot, 0
     
     moveObject cube_id, target_x, base_y, target_z
     rotateObject cube_id, 0, val_rot, 0
 
-    // Latency injection to synchronize with engine frame rate
     wait 5
 
-    // Dialogue Generation
-    // Using floor to ensure index is strictly 1-12
+    // Zitat-Auswahl
     quote_idx = floor(rnd * 12) + 1
-    
     text = quotes[quote_idx]
     
-    // NPC Parameter mapping
+    // NPC Parameter
     config_cam_y   = 1.5
     config_mtime   = 2
     config_role    = ""
@@ -49,12 +50,14 @@ while true
     config_code    = ""
     config_ttp     = "true"
 
-    // Trigger NPC State change
-    // Using spatial proximity triggers for interaction
     makeNPC cube_id, config_cam_y, config_mtime, config_role, text, text, text, text, text, config_sr, config_sound, config_gpt, config_code, config_ttp
 
     wait 5
     
-    // Hard exit after 120s to prevent memory fragmentation in long-running sessions
-    if time > 120 then break
+    // 2. Endposition: Zurück zum Start nach 120 Sekunden
+    if time > 120 then
+        moveObject npc_id, base_x, base_y, base_z
+        moveObject cube_id, base_x, base_y, base_z
+        break
+    end if
 end while
