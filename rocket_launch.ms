@@ -2,19 +2,28 @@
 // ROCKET LAUNCH - OPTIMIZED & REALISTIC
 // ==================================================
 
-// --- Configuration ---
+// @brief Konfiguration der Raketenteile und deren vertikaler Offsets.
 rocketParts = ["fusion", "fusion_orb"]
+partOffsets = {"fusion": 0, "fusion_orb": 18}
+
 launchPadPos = [220, 0, -720]
 targetAltitude = 1250
 loopWaitTime = 0.02
 
 // --- Helper Functions ---
-// Moves all rocket components simultaneously and adds optional vibration/shake
+
+// @brief Applikation der Raketenbewegung auf alle Komponenten.
+// @param posX Basis-X-Koordinate.
+// @param currentHeight Aktuelle physikalische Höhe.
+// @param posZ Basis-Z-Koordinate.
+// @param shakeIntensity Vibrationsstärke.
+// @complexity O(n)
 applyRocketMotion = function(posX, currentHeight, posZ, shakeIntensity=0)
     offsetX = (rnd() - 0.5) * shakeIntensity
     offsetZ = (rnd() - 0.5) * shakeIntensity
     for partName in rocketParts
-        moveObject partName, posX + offsetX, currentHeight, posZ + offsetZ
+        yPos = currentHeight + partOffsets[partName]
+        moveObject partName, posX + offsetX, yPos, posZ + offsetZ
     end for
 end function
 
