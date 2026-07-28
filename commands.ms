@@ -2,7 +2,7 @@ networkCommand "Name", "moveObject", "1, 1, 1, 1"
 networkCommand "Name", "scaleObject", "1, 1, 1, 1"
 networkCommand "Name", "rotateObject", "1, 1, 1, 1"
 
-networkCommand "Name", "changeTexture", "https://https://my-content.chaarmi.org/"
+networkCommand "Name", "changeTexture", "https://my-content.chaarmi.org/"
 
 networkCommand "Name", "moveObject", "1, 1, 1, 1"
 
@@ -25,7 +25,7 @@ frequency = 0.1
 
 playVideo(
 	"videoBall1",
-	"https://https://my-content.chaarmi.org/video/sphere_video6.mp4",
+	"https://my-content.chaarmi.org/video/sphere_video6.mp4",
 	"loop",
 	0)
 
