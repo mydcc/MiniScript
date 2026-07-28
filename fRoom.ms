@@ -1,42 +1,38 @@
 // --- Configuration ---
-
-// Room ID, if you have multiple rooms
-room_idx = 1
-
-// Dimensions of the room
-length = 6
-width = 12
+// Dimensions
+length = 32
+width = 10
 height = 4
-thickness = 0.3
+thickness = 0.1
 
-// Position of the room in the world
-positionx = 2
+// Positions
+positionx = 20
 positiony = 0
-positionz = 6
+positionz = -33
 
-// Rotation of the room. Keep x and z at 0 for a flat room, adjust y for rotation.
+// Rotations
 rotationx = 0
-rotationy = 45  // Example rotation (adjustable)
+rotationy = 90  // Example rotation (adjustable)
 rotationz = 0
 
 // --- Object Definitions ---
 
-// Objects to be created (Cubes and Spheres)
-object1 = "Floor_"  + room_idx   // Floor
-object2 = "Wall1_"  + room_idx // Wall 1
-object3 = "Wall2_"  + room_idx  // Wall 2
-object4 = "Wall3_"  + room_idx  // Wall 3
-object5 = "topEntrance_"  + room_idx // Top Entrance
-object6 = "lEntrance_"  + room_idx // Left Entrance
-object7 = "rEntrance_"  + room_idx // Right Entrance
-object8 = "Edge1_"  + room_idx // Edge 1
-object9 = "Edge2_"  + room_idx // Edge 2
-object10 = "Edge3_"  + room_idx // Edge 3
-object11 = "Edge4_"  + room_idx // Edge 4
-
+// Objects
+object1 = "room1Floor"    // Floor
+object2 = "room1Wall(1)"   // Wall 1
+object3 = "room1Wall(2)"   // Wall 2
+object4 = "room1Wall(3)"   // Wall 3
+object5 = "room1Entrance(1)" // Top Entrance
+object6 = "room1Entrance(2)" // Left Entrance
+object7 = "room1Entrance(3)" // Right Entrance
+object8 = "room1Edge(1)"
+object9 = "room1Edge(2)"
+object10 = "room1Edge(3)"
+object11 = "room1Edge(4)"
+object12 = "Voicechat1"
 // --- Angle Calculation ---
 
-// Angle in Radians 
+// Angle in Radians
 angle = rotationy * pi / 180
 
 // Sine and Cosine
@@ -50,6 +46,7 @@ distance = width / 2
 distance2 = length / 2
 
 // --- Helper Functions ---
+
 // Calculate X displacement based on distance and angle
 calc_dx = function(dist, angle_cos)
   return dist * angle_cos
@@ -78,9 +75,11 @@ wally = positiony + height / 2
 wallz = positionz
 
 // --- Place Objects ---
-
 // Floor
 place_object(object1, positionx, positiony, positionz, rotationx, rotationy, rotationz, width, 0.001, length)
+
+// Voicechat
+place_object(object12, positionx, positiony + 0.125, positionz, rotationx, rotationy, rotationz, width, 0.25, length)
 
 // Walls
 place_object(object2, wallx - dx, wally, wallz + dz, rotationx, rotationy + 90, rotationz, length, height, thickness)

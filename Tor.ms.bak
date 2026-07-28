@@ -1,0 +1,254 @@
+// ========================================================
+// 1. INIT & KONFIGURATION
+// ========================================================
+xFieldMin = -108.7
+xFieldMax = -91.3
+zFieldMin = -212.72 // Torlinie Unten
+zFieldMax = -187.3 // Torlinie Oben
+
+// Tor-Breite (Präzise)
+goalXMin = -101
+goalXMax = -99
+
+yBall = 0.115
+yShadow = 0.115 // Höhe für den Ballschatten
+
+// DYNAMISCHE SCHUSSSTÄRKE (aus Untitled-1 übernommen)
+flightTime = rnd * 2 + 0.8 // Zufällig zwischen 0.8s (stark) und 2.8s (roller)
+camTime = flightTime - 0.5
+if camTime < 0.2 then camTime = 0.2
+
+// ZUFALLSGENERATOR (Zielberechnung)
+// Bereich nur minimal über das Feld hinaus (+/- 1 bis 2 Einheiten), damit mehr Bälle im Spiel bleiben
+targetX = (xFieldMin - 1) + rnd * ((xFieldMax + 1) - (xFieldMin - 1))
+targetZ = (zFieldMin - 2) + rnd * ((zFieldMax + 2) - (zFieldMin - 2))
+
+// Datenstrings vorbereiten
+sBallMove = "" + targetX + "," + yBall + "," + targetZ + "," + flightTime
+sShadowMove = "" + targetX + "," + yShadow + "," + targetZ + "," + flightTime
+sBallRot = "" + (rnd * 360) + "," + (rnd * 360) + "," + (rnd * 360) + "," + flightTime
+
+// ========================================================
+// 2. PHYSISCHE BEWEGUNG (Netzwerk)
+// ========================================================
+// Ball bewegen
+networkCommand "ball", "moveObject", sBallMove
+networkCommand "ball", "rotateObject", sBallRot
+
+// Ball-Schatten mitbewegen (Wichtig für Realismus)
+networkCommand "ball_trigger", "moveObject", sShadowMove
+
+// Roll-Sound abspielen (kurz skalieren zum Triggern)
+networkCommand "ballRoll_trigger", "scaleObject", "100, 100, 100"
+wait 0.05
+networkCommand "ballRoll_trigger", "scaleObject", "1, 1, 1"
+
+// ========================================================
+// 3. LOGIK-PRÜFUNG (Bounding Box Check)
+// ========================================================
+isGoal = 0
+isOut = 0
+whichGoal = 0 // 1 = Unten, 2 = Oben
+
+if targetZ < zFieldMin then
+	// Bereich Tor 1 (Unten)
+	if targetX >= goalXMin and targetX <= goalXMax then
+		isGoal = 1
+		whichGoal = 1
+	else
+		isOut = 1
+	end if
+else if targetZ > zFieldMax then
+	// Bereich Tor 2 (Oben)
+	if targetX >= goalXMin and targetX <= goalXMax then
+		isGoal = 1
+		whichGoal = 2
+	else
+		isOut = 1
+	end if
+else if targetX < xFieldMin or targetX > xFieldMax then
+	// Seitenaus
+	isOut = 1
+end if
+
+// ========================================================
+// 4. EREIGNIS-BEHANDLUNG (Sounds & Referee)
+// ========================================================
+
+if isGoal == 1 then
+	// --- TOR SZENARIO ---
+	k = {
+		0: "TOOOOR!",
+		1: "Was für ein Hammer!",
+		2: "Unfassbar!",
+		3: "Weltklasse!",
+		4: "Direkt in den Winkel!",
+	}
+	d = {
+		0: "Was für ein Schuss!",
+		1: "Der Torwart war machtlos.",
+		2: "Einfach nur genial.",
+		3: "Traumtor!",
+	}
+	msg = k[floor(rnd * k.len)] + " " + d[floor(rnd * d.len)]
+	makeNPC(
+		"woman_referee",
+		0,
+		5,
+		"Schiedsrichterin",
+		msg,
+		msg,
+		msg,
+		msg,
+		msg,
+		"sequential",
+		"0",
+		"false",
+		"",
+		"true")
+
+	if whichGoal == 1 then
+		networkCommand "Goal1Sound_trigger", "scaleObject", "100, 100, 100, 0.001"
+		wait 0.01
+		networkCommand "Goal1Sound_trigger", "scaleObject", "1, 1, 1, 0.001"
+	else
+		networkCommand "Goal2Sound_trigger", "scaleObject", "100, 100, 100, 0.001"
+		wait 0.01
+		networkCommand "Goal2Sound_trigger", "scaleObject", "1, 1, 1, 0.001"
+	end if
+	customAvatarAnim "25", "oneshot"
+
+else if isOut == 1 then
+	// --- AUS SZENARIO ---
+	networkCommand "offsiteSound_trigger", "scaleObject", "100, 100, 100, 0.001"
+	wait 0.01
+	networkCommand "offsiteSound_trigger", "scaleObject", "1, 1, 1, 0.001"
+
+	if targetZ < zFieldMin or targetZ > zFieldMax then
+		kO = {
+			0: "Abstoß!",
+			1: "Toraus!",
+			2: "Knapp am Pfosten vorbei!",
+		}
+		dO = {
+			0: "Das war eng.",
+			1: "Nächstes Mal mehr Zielwasser.",
+			2: "Fast ein Treffer!",
+		}
+		msg = kO[floor(rnd * kO.len)] + " " + dO[floor(rnd * dO.len)]
+	else
+		kO = {
+			0: "Seitenaus!",
+			1: "Einwurf!",
+			2: "Ball im Aus!",
+		}
+		dO = {
+			0: "Da fehlt die Präzision.",
+			1: "Wieder im Spiel aufbauen.",
+			2: "Konzentration!",
+		}
+		msg = kO[floor(rnd * kO.len)] + " " + dO[floor(rnd * dO.len)]
+	end if
+
+	makeNPC(
+		"woman_referee",
+		0,
+		5,
+		"Schiedsrichterin",
+		msg,
+		msg,
+		msg,
+		msg,
+		msg,
+		"sequential",
+		"0",
+		"false",
+		"",
+		"true")
+
+	refX = targetX + (rnd * 2 - 1)
+	if refX < -110 then refX = -110
+	if refX > -89 then refX = -89
+	sRefData = "" + refX + ", 0.6, " + targetZ + ", 1.5"
+	networkCommand "woman_referee", "moveObject", sRefData
+	networkCommand "woman_referee", "rotateObject", "0, " + (rnd * 360) + ", 0, 0.1"
+	networkCommand "woman_referee", "aniObject", "woman_referee, 33, oneshot, 1"
+
+else
+	// --- BALL BLEIBT IM FELD ---
+	kF = {
+		0: "Guter Schuss!",
+		1: "Im Spiel!",
+		2: "Weiter geht's!",
+	}
+	dF = {
+		0: "Schöner Ball.",
+		1: "Der bleibt heiß!",
+		2: "Gute Technik.",
+	}
+	msg = kF[floor(rnd * kF.len)] + " " + dF[floor(rnd * dF.len)]
+	makeNPC(
+		"woman_referee",
+		0,
+		5,
+		"Schiedsrichterin",
+		msg,
+		msg,
+		msg,
+		msg,
+		msg,
+		"sequential",
+		"0",
+		"false",
+		"",
+		"true")
+end if
+
+
+// ========================================================
+// 5. erweiterte KAMERA-LOGIK (Director Mode)
+// ========================================================
+
+rndCam = floor(rnd * 3) // Würfelt standardmäßig nur 0, 1, 2
+if isGoal == 1 then
+	rndCam = 3 // Bei Tor IMMER Highlight-Cam (3)
+else if isOut == 1 and (targetZ < zFieldMin or targetZ > zFieldMax) then
+	rndCam = 1 + floor(rnd * 2) // Bei Toraus nur Seitenlinie (1) oder Verfolger (2)
+end if
+
+camPos = ""
+camRot = ""
+
+if rndCam == 0 then
+	// Totale (Weitwinkel)
+	camPos = "-80, 15, -200, " + camTime
+	camRot = "25, 270, 0, " + camTime
+else if rndCam == 1 then
+	// Seitenlinie (Dynamischer Abstand)
+	// Wir halten immer ca. 10 Einheiten Abstand zum Ball in X-Richtung
+	camPos = (targetX + 10) + ", 2, " + targetZ + ", " + camTime
+	camRot = "0, 270, 0, " + camTime
+else if rndCam == 2 then
+	// Verfolger (Hinter dem Ball)
+	// Wenn Ball im Aus hinter dem Tor, ziehen wir die Kamera in Z weiter zurück
+	zOff = 10
+	if isOut == 1 and (targetZ < zFieldMin or targetZ > zFieldMax) then zOff = 15
+
+	camPos = (targetX + 5) + ", 5, " + (targetZ + zOff) + ", " + camTime
+	camRot = "15, 210, 0, " + camTime
+else
+	// TOR-KAMERA (Highlight)
+	if whichGoal == 1 then
+		// Blick auf Tor 1 (-212)
+		camPos = "-100, 2, -205, " + camTime
+		camRot = "10, 180, 0, " + camTime
+	else
+		// Blick auf Tor 2 (-187) oder generelles Action-Cam
+		camPos = "-100, 2, -195, " + camTime
+		camRot = "10, 0, 0, " + camTime
+	end if
+end if
+
+// Kamera Update
+networkCommand "MainCamera", "moveObject", camPos
+networkCommand "MainCamera", "rotateObject", camRot
