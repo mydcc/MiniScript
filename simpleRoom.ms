@@ -78,6 +78,7 @@ wally = positiony + height / 2
 wallz = positionz
 
 // --- Place Objects ---
+
 // Floor
 place_object(object1, positionx, positiony, positionz, rotationx, rotationy, rotationz, width, 0.001, length)
 
